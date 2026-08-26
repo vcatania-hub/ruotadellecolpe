@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruota delle Colpe</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #111;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+    }
+
+    .container {
+        text-align: center;
+    }
+
+    h1 {
+        margin: 0 0 10px;
+        font-size: 42px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .subtitle {
+        margin-bottom: 30px;
+        opacity: .7;
+    }
+
+    .wheel-wrapper {
+        position: relative;
+        width: 520px;
+        height: 520px;
+        margin: 0 auto 30px;
+    }
+
+    canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    /* Puntatore */
+    .pointer {
+        position: absolute;
+        top: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 18px solid transparent;
+        border-right: 18px solid transparent;
+        border-top: 45px solid #fff;
+        z-index: 10;
+        filter: drop-shadow(0 3px 4px rgba(0,0,0,.5));
+    }
+
+    button {
+        border: 0;
+        padding: 16px 35px;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 50px;
+        cursor: pointer;
+        background: #fff;
+        color: #111;
+        transition: transform .15s ease;
+    }
+
+    button:hover {
+        transform: scale(1.05);
+    }
+
+    button:active {
+        transform: scale(.97);
+    }
+
+    button:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    .result {
+        margin-top: 25px;
+        min-height: 70px;
+    }
+
+    .result-label {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: .6;
+    }
+
+    .winner {
+        font-size: 38px;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+
+    @media (max-width: 600px) {
+        h1 {
+            font-size: 30px;
+        }
+
+        .wheel-wrapper {
+            width: 90vw;
+            height: 90vw;
+            max-width: 520px;
+            max-height: 520px;
+        }
+
+        .winner {
+            font-size: 30px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🎯 Ruota delle Colpe</h1>
+    <div class="subtitle">Scopri chi di chi è la colpa oggi...</div>
+
+    <div class="wheel-wrapper">
+        <div class="pointer"></div>
+        <canvas id="wheel"></canvas>
+    </div>
+
+    <button id="spinButton">GIRA LA RUOTA</button>
+
+    <div class="result">
+        <div class="result-label">Il colpevole di oggi è...</div>
+        <div class="winner" id="winner">?</div>
+    </div>
+
+</div>
+
+<script>
+
+const names = [
+    "Vincenzo",
+    "Federico",
+    "Diletta",
+    "Iride",
+    "Francesca",
+    "Anna",
+    "Luca",
+    "Federica",
+    "Carmine",
+    "Doris",
+    "Nadia",
+    "Nello",
+    "Paolo",
+    "Alfonso",
+    "Gaetano"
+];
+
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const button = document.getElementById("spinButton");
+const winner = document.getElementById("winner");
+
+const size = 520;
+const center = size / 2;
+const radius = 245;
+
+canvas.width = size;
+canvas.height = size;
+
+const segmentAngle = (Math.PI * 2) / names.length;
+
+let rotation = 0;
+let spinning = false;
+
+
+/* Disegna la ruota */
+function drawWheel() {
+
+    ctx.clearRect(0, 0, size, size);
+
+    names.forEach((name, index) => {
+
+        const startAngle =
+            rotation +
+            index * segmentAngle -
+            Math.PI / 2;
+
+        const endAngle =
+            startAngle +
+            segmentAngle;
+
+        /* Spicchio */
+        ctx.beginPath();
+        ctx.moveTo(center, center);
+        ctx.arc(
+            center,
+            center,
+            radius,
+            startAngle,
+            endAngle
+        );
+        ctx.closePath();
+
+        ctx.fillStyle =
+            index % 2 === 0
+                ? "#ffffff"
+                : "#dddddd";
+
+        ctx.fill();
+
+        ctx.strokeStyle = "#111";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+
+        /* Testo */
+
+        ctx.save();
+
+        const textAngle =
+            startAngle + segmentAngle / 2;
+
+        ctx.translate(
+            center + Math.cos(textAngle) * radius * 0.65,
+            center + Math.sin(textAngle) * radius * 0.65
+        );
+
+        ctx.rotate(textAngle + Math.PI / 2);
+
+        ctx.fillStyle = "#111";
+        ctx.font = "bold 15px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillText(name, 0, 0);
+
+        ctx.restore();
+
+    });
+
+
+    /* Cerchio centrale */
+
+    ctx.beginPath();
+    ctx.arc(center, center, 45, 0, Math.PI * 2);
+
+    ctx.fillStyle = "#111";
+    ctx.fill();
+
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 13px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.fillText("COLPA", center, center);
+
+}
+
+
+/* Animazione */
+
+function spin() {
+
+    if (spinning) return;
+
+    spinning = true;
+    button.disabled = true;
+
+    winner.textContent = "?";
+
+    /* Indice casuale */
+
+    const selectedIndex =
+        Math.floor(Math.random() * names.length);
+
+
+    /*
+        Calcoliamo la rotazione necessaria
+        per portare lo spicchio scelto sotto
+        il puntatore in alto.
+    */
+
+    const targetAngle =
+        -(selectedIndex * segmentAngle +
+        segmentAngle / 2);
+
+
+    const current =
+        rotation % (Math.PI * 2);
+
+    let difference =
+        targetAngle - current;
+
+    while (difference < 0) {
+        difference += Math.PI * 2;
+    }
+
+    /* Aggiungiamo diversi giri */
+
+    const extraSpins =
+        6 + Math.floor(Math.random() * 3);
+
+    const finalRotation =
+        rotation +
+        extraSpins * Math.PI * 2 +
+        difference;
+
+    const startRotation = rotation;
+
+    const duration = 5000;
+
+    const startTime = performance.now();
+
+
+    function animate(currentTime) {
+
+        const elapsed =
+            currentTime - startTime;
+
+        const progress =
+            Math.min(elapsed / duration, 1);
+
+
+        /*
+            Ease-out:
+            parte velocemente e rallenta
+            progressivamente.
+        */
+
+        const ease =
+            1 - Math.pow(1 - progress, 4);
+
+
+        rotation =
+            startRotation +
+            (finalRotation - startRotation) * ease;
+
+        drawWheel();
+
+
+        if (progress < 1) {
+
+            requestAnimationFrame(animate);
+
+        } else {
+
+            rotation = finalRotation;
+
+            drawWheel();
+
+            winner.textContent =
+                names[selectedIndex];
+
+            spinning = false;
+            button.disabled = false;
+        }
+    }
+
+
+    requestAnimationFrame(animate);
+}
+
+
+button.addEventListener("click", spin);
+
+drawWheel();
+
+</script>
+
+</body>
+</html>
